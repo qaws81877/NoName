@@ -113,7 +113,7 @@ class LHCrawler:
     API_URL = "http://apis.data.go.kr/B552555/lhNoticeInfo1/getNoticeInfo1"
     JSON_URL = "https://apply.lh.or.kr/lhapply/apply/wt/wrtanc/selectWrtancListJson.do"
     HTML_URL = "https://apply.lh.or.kr/lhapply/apply/wt/wrtanc/selectWrtancList.do?mi=1026"
-    DETAIL_URL = "https://apply.lh.or.kr/lhapply/apply/wt/wrtanc/selectWrtancView.do?panId={}"
+    DETAIL_URL = "https://apply.lh.or.kr/lhapply/apply/wt/wrtanc/selectWrtancInfo.do?panId={}"
 
     def __init__(self):
         self.session = requests.Session()
