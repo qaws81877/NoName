@@ -252,6 +252,10 @@ class LHCrawler:
     def _extract_id(link, title: str) -> str:
         """<a> 태그에서 공고 ID를 추출한다."""
         if link:
+            # data-id1 속성 (LH SPA 방식)
+            data_id = link.get("data-id1", "")
+            if data_id:
+                return data_id
             href = link.get("href", "")
             # panId= 파라미터
             m = re.search(r"panId=([^&]+)", href)
