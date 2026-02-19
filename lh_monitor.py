@@ -113,7 +113,10 @@ class LHCrawler:
     API_URL = "http://apis.data.go.kr/B552555/lhNoticeInfo1/getNoticeInfo1"
     JSON_URL = "https://apply.lh.or.kr/lhapply/apply/wt/wrtanc/selectWrtancListJson.do"
     HTML_URL = "https://apply.lh.or.kr/lhapply/apply/wt/wrtanc/selectWrtancList.do?mi=1026"
-    DETAIL_URL = "https://apply.lh.or.kr/lhapply/apply/wt/wrtanc/selectWrtancInfo.do?panId={}"
+    DETAIL_URL = (
+        "https://apply.lh.or.kr/lhapply/apply/wt/wrtanc/selectWrtancInfo.do"
+        "?ccrCnntSysDsCd={ccr}&panId={pan_id}&aisTpCd={ais}&uppAisTpCd={upp}&mi=1026"
+    )
 
     def __init__(self):
         self.session = requests.Session()
@@ -143,15 +146,22 @@ class LHCrawler:
 
             results = []
             for it in item_list:
+                dtl_url = it.get("dtlUrl", "")
+                pan_id = str(it.get("sn", ""))
+                # dtlUrl이 비어있으면 기본 파라미터로 상세 URL 구성
+                if not dtl_url and pan_id:
+                    dtl_url = self.DETAIL_URL.format(
+                        ccr="03", pan_id=pan_id, ais="", upp="",
+                    )
                 results.append({
-                    "id": str(it.get("sn", "")),
+                    "id": pan_id,
                     "title": it.get("sj", ""),
                     "rental_type": it.get("typeCdNm", ""),
                     "status": "",
                     "reg_date": normalize_date(it.get("crtDt", "")),
                     "rcpt_begin": normalize_date(it.get("rceptBgnDt", "")),
                     "rcpt_end": normalize_date(it.get("rceptEndDt", "")),
-                    "url": it.get("dtlUrl", ""),
+                    "url": dtl_url,
                 })
             logger.info("공공데이터 API: %d개 수집", len(results))
             return results
@@ -193,6 +203,8 @@ class LHCrawler:
         for it in items:
             pan_id = it.get("panId") or it.get("PAN_ID", "")
             type_cd = it.get("aisTpCd") or it.get("AIS_TP_CD", "")
+            ccr = it.get("ccrCnntSysDsCd") or it.get("CCR_CNNT_SYS_DS_CD", "03")
+            upp = it.get("uppAisTpCd") or it.get("UPP_AIS_TP_CD", "")
             results.append({
                 "id": str(pan_id),
                 "title": it.get("panNm") or it.get("PAN_NM", ""),
@@ -201,7 +213,7 @@ class LHCrawler:
                 "reg_date": normalize_date(it.get("dttmRgst") or it.get("DTTM_RGST", "")),
                 "rcpt_begin": normalize_date(it.get("clsgBgnDt") or it.get("CLSG_BGN_DT", "")),
                 "rcpt_end": normalize_date(it.get("clsgEndDt") or it.get("CLSG_END_DT", "")),
-                "url": self.DETAIL_URL.format(pan_id),
+                "url": self.DETAIL_URL.format(ccr=ccr, pan_id=pan_id, ais=type_cd, upp=upp),
             })
         logger.info("JSON API: %d개 수집", len(results))
         return results
@@ -225,10 +237,15 @@ class LHCrawler:
             cols = row.find_all("td")
             if not cols:
                 continue
-            # 제목 및 링크 추출
-            link = row.find("a")
+            # wrtancInfoBtn 링크를 우선 선택 (첨부파일 링크와 혼동 방지)
+            link = row.find("a", class_="wrtancInfoBtn") or row.find("a")
             title = link.get_text(strip=True) if link else cols[0].get_text(strip=True)
             ann_id = self._extract_id(link, title)
+
+            # 상세 URL 구성에 필요한 추가 파라미터 추출
+            ccr = link.get("data-id2", "03") if link else "03"
+            upp = link.get("data-id3", "") if link else ""
+            ais = link.get("data-id4", "") if link else ""
 
             # 컬럼에서 데이터 추출 (컬럼 수가 다를 수 있으므로 안전하게)
             def col_text(idx):
@@ -243,7 +260,7 @@ class LHCrawler:
                 "rcpt_begin": normalize_date(col_text(5)),
                 "rcpt_end": normalize_date(col_text(6)),
                 "status": col_text(7),
-                "url": self.DETAIL_URL.format(ann_id),
+                "url": self.DETAIL_URL.format(ccr=ccr, pan_id=ann_id, ais=ais, upp=upp),
             })
         logger.info("HTML 크롤링: %d개 수집", len(results))
         return results

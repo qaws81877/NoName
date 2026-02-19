@@ -254,6 +254,24 @@ HTML_NO_HREF = """
 </body></html>
 """
 
+HTML_WITH_DATA_ATTRS = """
+<html><body>
+<table><tbody>
+<tr>
+  <td>1</td>
+  <td>공공임대</td>
+  <td><a href="javascript:" class="wrtancInfoBtn" data-id1="2015122300019370" data-id2="03" data-id3="06" data-id4="08">부산 공공임대 공고</a></td>
+  <td>부산광역시</td>
+  <td></td>
+  <td>2026.02.19</td>
+  <td>2026.03.15</td>
+  <td>공고중</td>
+  <td>100</td>
+</tr>
+</tbody></table>
+</body></html>
+"""
+
 HTML_EMPTY_TABLE = """
 <html><body>
 <table><tbody>
@@ -307,6 +325,26 @@ class TestFetchWebHtml:
         result = LHCrawler().fetch_web()
         assert len(result) == 1
         assert len(result[0]["id"]) == 16  # MD5 해시 앞 16자
+
+    @patch.object(requests.Session, "get")
+    @patch.object(requests.Session, "post")
+    def test_data_attr_extraction(self, mock_post, mock_get):
+        """wrtancInfoBtn data-id1~4 속성 → ID 및 전체 파라미터 URL 생성."""
+        mock_post.side_effect = Exception("JSON API fail")
+        resp = MagicMock()
+        resp.text = HTML_WITH_DATA_ATTRS
+        resp.raise_for_status = MagicMock()
+        mock_get.return_value = resp
+
+        result = LHCrawler().fetch_web()
+        assert len(result) == 1
+        assert result[0]["id"] == "2015122300019370"
+        url = result[0]["url"]
+        assert "panId=2015122300019370" in url
+        assert "ccrCnntSysDsCd=03" in url
+        assert "aisTpCd=08" in url
+        assert "uppAisTpCd=06" in url
+        assert "mi=1026" in url
 
     @patch.object(requests.Session, "get")
     @patch.object(requests.Session, "post")
