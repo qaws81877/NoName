@@ -1,0 +1,15 @@
+services:
+  lh-monitor:
+    build: .
+    container_name: lh-monitor
+    restart: unless-stopped
+    environment:
+      - TZ=Asia/Seoul
+    volumes:
+      - ./data:/app/data
+      - ./.env:/app/.env:ro
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
