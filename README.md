@@ -61,3 +61,24 @@ Telegram과 Discord 중 하나 이상은 반드시 설정해야 합니다. 둘 �
 pip install pytest
 python -m pytest tests/ -v
 ```
+
+
+nohup /home/ubuntu/NoName/venv/bin/python -u lh_monitor.py &
+
+  이렇게 하면 SSH 연결을 끊어도 봇이 계속 동작합니다.
+
+  로그를 확인하고 싶을 때는 이렇게 하면 됩니다.
+
+  tail -f nohup.out
+
+  봇을 중지하고 싶을 때는 이렇게 합니다.
+
+  kill 339501
+
+  killall python
+
+  또는 venv 경로의 python만 종료하려면 이렇게 합니다.
+
+  pkill -f lh_monitor.py
+
+  pkill -f는 명령줄에 lh_monitor.py가 포함된 프로세스만 골라서 종료하므로 더 안전합니다.

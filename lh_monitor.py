@@ -234,14 +234,15 @@ class LHCrawler:
             def col_text(idx):
                 return cols[idx].get_text(strip=True) if idx < len(cols) else ""
 
+            # 컬럼: 번호(0), 유형(1), 공고명(2), 지역(3), 첨부(4), 게시일(5), 마감일(6), 상태(7), 조회수(8)
             results.append({
                 "id": ann_id,
                 "title": title,
                 "rental_type": col_text(1),
-                "reg_date": normalize_date(col_text(2)),
-                "rcpt_begin": normalize_date(col_text(3)),
-                "rcpt_end": normalize_date(col_text(4)),
-                "status": col_text(5),
+                "reg_date": normalize_date(col_text(5)),
+                "rcpt_begin": normalize_date(col_text(5)),
+                "rcpt_end": normalize_date(col_text(6)),
+                "status": col_text(7),
                 "url": self.DETAIL_URL.format(ann_id),
             })
         logger.info("HTML 크롤링: %d개 수집", len(results))
